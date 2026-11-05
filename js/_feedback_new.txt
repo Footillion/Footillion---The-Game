@@ -1,0 +1,98 @@
+  /* ---------- pitch animation ---------- */
+  var PITCH_H = 340, RUNNER_H = 42;
+  /* how far down the pitch each tier takes you (0 = top, 1 = goal line) */
+  var PITCH_POS = [0, 0.24, 0.42, 0.60, 0.82, 0.95];
+  var PITCH_LABELS = ['STUCK AT THE TOP', 'OFFSIDE!', 'WITH THE FANS', 'LEVEL WITH THE DUGOUT', 'THROUGH ON GOAL!', 'GOAL!!!'];
+  var spriteCache = {};
+  function sprite(key, rows, pal, scale) {
+    if (spriteCache[key]) return spriteCache[key];
+    var c = document.createElement('canvas'); c.width = rows[0].length * scale; c.height = rows.length * scale;
+    var x = c.getContext('2d');
+    rows.forEach(function (row, j) {
+      for (var i = 0; i < row.length; i++) { var col = pal[row.charAt(i)]; if (col) { x.fillStyle = col; x.fillRect(i * scale, j * scale, scale, scale); } }
+    });
+    return (spriteCache[key] = c.toDataURL('image/png'));
+  }
+  var BODY = ['...hhh...', '..hhhhh..', '..sssss..', '..sssss..', '.yyyyyyy.', 'syyyyyyys', 's.yyyyy.s', '..wwwww..', '..wwwww..', '..sw.ws..', '..s...s..', '..g...g..', '..g...g..', '.bb...bb.'];
+  var PAL = { h: '#4a2a14', s: '#f2c9a0', y: '#ffd23f', w: '#f2fff0', g: '#4cd964', b: '#14110c' };
+  function runnerSrc() { return sprite('runner', BODY, PAL, 3); }
+  function keeperSrc() { return sprite('keeper', BODY, { h: '#14110c', s: '#f2c9a0', y: '#4da3ff', w: '#14110c', g: '#14110c', b: '#f2fff0' }, 3); }
+  function ballSrc() { return sprite('ball', ['.www.', 'wwkww', 'wkkkw', 'wwkww', '.www.'], { w: '#f2fff0', k: '#031009' }, 3); }
+  function fansSrc() {
+    var cols = ['#ff6b5a', '#4da3ff', '#ffd23f', '#f2fff0', '#c77dff'], rows = ['.sss.', '.sss.', 'ccccc', 'ccccc'], key = 'fans';
+    if (spriteCache[key]) return spriteCache[key];
+    var sc = 3, c = document.createElement('canvas'); c.width = cols.length * 6 * sc; c.height = rows.length * sc; var x = c.getContext('2d');
+    cols.forEach(function (col, n) {
+      rows.forEach(function (row, j) { for (var i = 0; i < 5; i++) { var ch = row.charAt(i); if (ch !== '.') { x.fillStyle = ch === 's' ? '#f2c9a0' : col; x.fillRect((n * 6 + i) * sc, j * sc, sc, sc); } } });
+    });
+    return (spriteCache[key] = c.toDataURL('image/png'));
+  }
+  function yFor(frac) { return Math.round(frac * (PITCH_H - RUNNER_H - 10)) + 4; }
+
+  function pitchHTML(res) {
+    var tier = res.status === 'ok' ? res.tier : -1, zones = [10, 15, 30, 60, 85, 100], ticks = '';
+    zones.forEach(function (pts, i) { ticks += '<span class="tick' + (i === tier ? ' on' : '') + '" style="top:' + (yFor(PITCH_POS[i]) + 14) + 'px">' + pts + '</span>'; });
+    return '<div class="fb-pitch"><div class="pitch" id="pitch" data-tier="' + tier + '">' +
+      '<div class="pl-half"></div><div class="pl-circle"></div><div class="pl-box pl-box-top"></div><div class="pl-box pl-box-bot"></div>' +
+      '<div class="goalmouth" id="goalmouth"></div>' + ticks +
+      '<img class="fans" alt="" src="' + fansSrc() + '" style="top:' + (yFor(PITCH_POS[2]) + 2) + 'px">' +
+      '<div class="dugout" style="top:' + (yFor(PITCH_POS[3]) + 4) + 'px"><i></i></div>' +
+      '<div class="flag" id="flag" style="top:' + (yFor(PITCH_POS[1]) - 4) + 'px"><i></i><b></b></div>' +
+      '<img class="keeper" id="keeper" alt="" src="' + keeperSrc() + '">' +
+      '<img class="runner" id="runner" alt="" src="' + runnerSrc() + '" style="top:' + yFor(0) + 'px">' +
+      '<img class="pball" id="pball" alt="" src="' + ballSrc() + '">' +
+      '<div class="pitch-label" id="pLabel"></div></div></div>';
+  }
+
+  function animatePitch(res) {
+    var pitch = $('#pitch'); if (!pitch) return;
+    var tier = res.status === 'ok' ? res.tier : 0;
+    var runner = $('#runner'), ball = $('#pball'), label = $('#pLabel'), flag = $('#flag'), keeper = $('#keeper'), goal = $('#goalmouth');
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var runMs = reduce ? 0 : 400 + tier * 300, target = yFor(PITCH_POS[tier]);
+    if (res.status !== 'ok') { pitch.classList.add('lost'); label.textContent = res.status === 'timeout' ? 'FULL TIME' : 'NO ATTACK'; label.className = 'pitch-label show lost'; return; }
+    runner.style.transition = runMs ? 'top ' + (runMs / 1000) + 's steps(' + Math.max(4, Math.round(runMs / 60)) + ', end)' : 'none';
+    if (runMs) runner.classList.add('running');
+    void runner.offsetWidth;
+    if (tier > 0) runner.style.top = target + 'px';
+    later(function () {
+      runner.classList.remove('running');
+      label.textContent = PITCH_LABELS[tier]; label.className = 'pitch-label show t' + tier;
+      if (tier === 1) { flag.classList.add('up'); runner.classList.add('blink'); }
+      if (tier >= 4) {
+        ball.style.display = 'block'; ball.style.top = (target + RUNNER_H - 14) + 'px';
+        keeper.classList.add(tier === 5 ? 'dive' : 'guard');
+      }
+      if (tier === 5) {
+        later(function () {
+          ball.style.transition = reduce ? 'none' : 'top .45s steps(6, end)';
+          ball.style.top = (PITCH_H - 22) + 'px';
+          later(function () {
+            goal.classList.add('scored'); pitch.classList.add('celebrate');
+            var conf = ''; for (var i = 0; i < 18; i++) conf += '<span class="conf" style="left:' + (8 + Math.random() * 84).toFixed(0) + '%;background:' + ['#ffd23f', '#4cd964', '#f2fff0', '#ff9f1c', '#c77dff'][i % 5] + ';animation-delay:' + (Math.random() * .4).toFixed(2) + 's"></span>';
+            pitch.insertAdjacentHTML('beforeend', conf);
+          }, reduce ? 0 : 450);
+        }, reduce ? 0 : 250);
+      }
+    }, runMs + 80);
+  }
+
+  function showFeedback(res) {
+    var p = session.players[session.p], qi = session.q;
+    var head, flavour;
+    if (res.status === 'ok') { head = '<span class="chip t' + res.tier + '">' + F.TIER_NAMES[res.tier] + '</span>'; flavour = res.tier >= 4 ? 'WHAT A STRIKE!' : res.tier === 3 ? 'Nice finish.' : res.tier === 2 ? 'On target.' : res.tier === 1 ? 'Close, but offside.' : 'A tap-in.'; }
+    else if (res.status === 'timeout') { head = '<span class="chip miss">Full time!</span>'; flavour = 'You ran out of the clock.'; }
+    else { head = '<span class="chip miss">Offside!</span>'; flavour = res.status === 'empty' ? 'No answer entered.' : 'That one is not on the team sheet.'; }
+    var counted = res.status === 'ok' && res.name.toLowerCase() !== res.input.toLowerCase() ? '<div class="said muted">Counted as: ' + esc(res.name) + '</div>' : '';
+    var last = qi === QN - 1;
+    stage.innerHTML = '<div class="card px">' + topLine(p, qi) + pipsHTML(p, qi + 1) + '<div class="fb-layout"><div class="feedback">' + head +
+      '<div class="pts sparkle' + (res.points ? '' : ' zero') + '">+' + res.points + '</div><div>' + flavour + '</div>' +
+      (res.input ? '<div class="said">You said: ' + esc(res.input) + '</div>' : '') + counted + '</div>' + pitchHTML(res) + '</div>' + meterHTML(playerTotal(p)) +
+      '<div class="btn-row" style="justify-content:center"><button class="btn-px" id="nextBtn">' + (last ? 'Full time' : 'Next question') + '</button></div></div>';
+    var advanced = false;
+    function next() { if (advanced) return; advanced = true; clearTimers(); advance(); }
+    $('#nextBtn').addEventListener('click', next); $('#nextBtn').focus();
+    animatePitch(res);
+    later(next, 5600);
+  }
+

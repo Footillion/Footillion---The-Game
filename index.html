@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Footillion - The Football Knowledge Tester</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="pitch-bg" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <!-- LEFT: big menu with dropdown -->
+    <div class="menu-wrap">
+      <button id="menuBtn" class="menu-btn" aria-haspopup="true" aria-expanded="false" aria-controls="menuDropdown">
+        <span class="burger" aria-hidden="true"></span>
+        <span class="menu-label">MENU</span>
+        <span id="menuUser" class="menu-user"></span>
+      </button>
+      <ul id="menuDropdown" class="dropdown px" role="menu" hidden>
+        <li role="none"><button role="menuitem" data-action="account"><i class="ico ico-user" aria-hidden="true"></i>Account Settings</button></li>
+        <li role="none"><button role="menuitem" data-action="multiplayer"><i class="ico ico-ball" aria-hidden="true"></i>Multiplayer <small>1-8 players</small></button></li>
+        <li role="none"><button role="menuitem" data-action="home"><i class="ico ico-flag" aria-hidden="true"></i>Daily Round</button></li>
+      </ul>
+    </div>
+
+    <!-- CENTRE: daily top 10 -->
+    <section class="leaderboard px" aria-labelledby="lbTitle">
+      <div class="lb-head">
+        <h2 id="lbTitle">TODAY'S TOP 10</h2>
+        <span id="lbDate" class="lb-date"></span>
+      </div>
+      <ol id="lbList" class="lb-list"></ol>
+    </section>
+
+    <!-- RIGHT: info / help bar -->
+    <div class="info-wrap">
+      <button id="infoBtn" class="info-btn" aria-expanded="false" aria-controls="infoPanel">
+        <span class="info-q" aria-hidden="true">?</span><span>HOW TO PLAY</span>
+      </button>
+      <div id="infoPanel" class="info-panel px" hidden>
+        <h3>HOW TO PLAY</h3>
+        <p>Every day there is a new round of <b>7 football prompts</b>. Type an answer that fits each prompt before the <b>25 second</b> clock runs out.</p>
+        <p>You get <b>one attempt per day</b>. The rarer your correct answer, the more points you score. Everyone gets the same questions on the same day.</p>
+        <table class="tier-table">
+          <tr><td><span class="chip t0">Sunday League</span></td><td>10</td><td>Everyone says it</td></tr>
+          <tr><td><span class="chip t1">Offside</span></td><td>15</td><td>Obvious, but a step beyond</td></tr>
+          <tr><td><span class="chip t2">Squad Player</span></td><td>30</td><td>Pretty common</td></tr>
+          <tr><td><span class="chip t3">First Teamer</span></td><td>60</td><td>Knowledgeable fans</td></tr>
+          <tr><td><span class="chip t4">World Class</span></td><td>85</td><td>Deep cut</td></tr>
+          <tr><td><span class="chip t5">One in a Footillion</span></td><td>100</td><td>Super rare!</td></tr>
+        </table>
+        <p>Each answer runs you down the pitch: 10 stays at the top, 15 is offside, 30 is level with the fans, 60 with the dugout, 85 is through on goal and 100 is a <b>goal</b>. An answer that does not fit the prompt scores <b>0</b>. A perfect round is <b>700</b>.</p>
+        <p class="tip">TIP: Skip the obvious. Typing <i>Manchester United</i> for a Premier League club is safe, but <i>Oldham Athletic</i> is gold. Small typos are forgiven.</p>
+        <p class="tip">MULTIPLAYER: open the menu to play 1-8 players on one device and see who scores highest.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="logo-row">
+      <canvas id="logoCanvas" class="logo-canvas" width="264" height="204" aria-label="Footillion logo: a pixel footballer kicking a ball" role="img"></canvas>
+      <div class="wordmark">
+        <h1>FOOTILLION</h1>
+        <p class="tagline">The Football Knowledge Tester</p>
+      </div>
+    </div>
+
+    <section id="stage" class="stage" aria-live="polite"></section>
+  </main>
+
+  <div id="modalRoot"></div>
+  <footer class="foot">FOOTILLION v1.1 &middot; Fan-made football quiz</footer>
+
+  <script src="js/engine.js"></script>
+  <script src="js/bank-clubs.js"></script>
+  <script src="js/bank-players.js"></script>
+  <script src="js/bank-nations.js"></script>
+  <script src="js/bank-clubplayers.js"></script>
+  <script src="js/bank-special.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/logo.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
